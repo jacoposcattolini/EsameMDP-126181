@@ -31,4 +31,40 @@ public class PlayerProfile {
         return step * (currentLevel + 1);
     }
 
+    private int currentLevel(String characterId, UpgradeType type) {
+        CharacterUpgrades u = getUpgrades(characterId);
+        return switch (type) {
+            case HP -> u.getHpLevel();
+            case ABILITY -> u.getAbilityLevel();
+        };
+    }
+
+    public int costFor(String characterId, UpgradeType type) {
+        return costFor(type, currentLevel(characterId, type));
+    }
+
+    public boolean isMaxLevel(String characterId, UpgradeType type) {
+        return currentLevel(characterId, type) >= MAX_LEVEL - 1;
+    }
+
+    public boolean canUpgrade(String characterId, UpgradeType type) {
+        return !isMaxLevel(characterId, type) && experience >= costFor(characterId, type);
+    }
+
+    public boolean upgrade(String characterId, UpgradeType type) {
+        if (isMaxLevel(characterId, type)) {
+            return false;
+        }
+        int cost = costFor(characterId, type);
+        if (experience < cost) {
+            return false;
+        }
+        experience -= cost;
+        CharacterUpgrades u = getUpgrades(characterId);
+        switch (type) {
+            case HP -> u.incHp();
+            case ABILITY -> u.incAbility();
+        }
+        return true;
+    }
 }
