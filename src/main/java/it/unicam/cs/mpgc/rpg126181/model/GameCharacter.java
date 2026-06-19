@@ -30,4 +30,35 @@ public class GameCharacter {
         return id;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getPower() {
+        return power;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getStory() {
+        return story;
+    }
+
+    public Ability getAbility() {
+        return ability;
+    }
+
+    public int getMaxHp() {
+        return maxHp;
+    }
+
+    public double getDamageMultiplier() {
+        return damageMultiplier;
+    }
+
+    public int effectiveMaxHp(int hpLevel) {
+        return maxHp + hpLevel * HP_PER_LEVEL;
+    }
 }
