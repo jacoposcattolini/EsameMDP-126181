@@ -190,4 +190,93 @@ public class BattleModel {
         return new HitOutcome(HitType.WRONG, lane, false);
     }
 
+    public AdvanceResult advance(double dt) {
+        gameTime += dt;
+
+        if (bombsActive && gameTime >= nextBombTime) {
+            double targetTime = gameTime + APPROACH_TIME;
+            int lane = pickFreeBombLane(targetTime);
+            if (lane >= 0) {
+                notes.add(new Note(targetTime, lane, true));
+                nextBombTime = gameTime + BOMB_INTERVAL;
+            } else {
+                nextBombTime = gameTime + 0.2;
+            }
+        }
+
+        boolean anyMiss = false;
+        boolean playerDied = false;
+        for (Note note : notes) {
+            if (!note.isResolved() && note.getTargetTime() < gameTime - goodWindow) {
+                note.resolve();
+                if (note.isBomb()) {
+                    continue;
+                }
+                resolvedCount++;
+                errors++;
+                streak = 0;
+                perfectStreak = 0;
+                penalizeXp();
+                damagePlayer();
+                anyMiss = true;
+                if (isPlayerDead()) {
+                    playerDied = true;
+                    break;
+                }
+            }
+        }
+        boolean notesExhaustedLoss = !playerDied && !boss.hasMusic()
+                && resolvedCount >= totalNotes && bossHp > 0;
+        return new AdvanceResult(anyMiss, playerDied, notesExhaustedLoss);
+    }
+
+    private void heal(int amount) {
+        playerHp = Math.min(playerMaxHp, playerHp + amount);
+    }
+
+    private void penalizeXp() {
+        xpEarned = Math.max(0, xpEarned - ERROR_XP_PENALTY);
+    }
+
+    private void damageBoss(double amount) {
+        bossHp = Math.max(0, bossHp - amount);
+        if (boss.getPower() == BossPower.BOMB_NOTES && !bombsActive
+                && bossHp <= bossMaxHp * BossPower.THRESHOLD) {
+            bombsActive = true;
+            nextBombTime = gameTime + 0.6;
+        }
+    }
+
+    private void damagePlayer() {
+        if (arcade || keepPlayingAfterDefeat) {
+            return;
+        }
+        playerHp = Math.max(0, playerHp - boss.getPlayerDamagePerMiss());
+    }
+
+    private int pickFreeBombLane(double targetTime) {
+        List<Integer> free = new ArrayList<>();
+        for (int lane = 0; lane < GameContent.LANES; lane++) {
+            boolean busy = false;
+            for (Note n : notes) {
+                if (n.isResolved() || n.getLane() != lane) {
+                    continue;
+                }
+                if (Math.abs(n.getTargetTime() - targetTime) < BOMB_CLEARANCE) {
+                    busy = true;
+                    break;
+                }
+            }
+            if (!busy) {
+                free.add(lane);
+            }
+        }
+        return free.isEmpty() ? -1 : free.get(rng.nextInt(free.size()));
+    }
+
+    public boolean notesShrunk() {
+        return boss.getPower() == BossPower.SHRINK_NOTES
+                && bossHp <= bossMaxHp * BossPower.THRESHOLD;
+    }
+
 }
