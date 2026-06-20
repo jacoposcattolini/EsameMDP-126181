@@ -45,4 +45,51 @@ public class Boss {
         this.power = power == null ? BossPower.NONE : power;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getStory() {
+        return story;
+    }
+
+    public Difficulty getDifficulty() {
+        return difficulty;
+    }
+
+    public int getMaxHp() {
+        return maxHp;
+    }
+
+    public int getNoteCount() {
+        return noteCount;
+    }
+
+    public double getNoteIntervalSeconds() {
+        return noteIntervalSeconds;
+    }
+
+    public int getPlayerDamagePerMiss() {
+        return playerDamagePerMiss;
+    }
+
+    public String getMusicResource() {
+        return musicResource;
+    }
+
+    public double getBpm() {
+        return bpm;
+    }
+
+    public double getMusicOffsetSeconds() {
+        return musicOffsetSeconds;
+    }
+
+    public boolean hasMusic() {
+        return musicResource != null;
+    }
+
+    public BossPower getPower() {
+        return power;
+    }
 }
