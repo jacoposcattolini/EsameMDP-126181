@@ -1,0 +1,98 @@
+package it.unicam.cs.mpgc.rpg126181.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+public class BattleModel {
+
+    public enum HitType {WRONG, BOMB, GOOD, PERFECT, CRIT}
+
+    public record HitOutcome(HitType type, int lane, boolean healed) {
+    }
+
+    public record AdvanceResult(boolean anyMiss, boolean playerDied, boolean notesExhaustedLoss) {
+    }
+
+    public static final double APPROACH_TIME = 1.9;
+
+    private static final int XP_GOOD = 1;
+    private static final int XP_PERFECT = 5;
+    private static final double ERROR_XP_PENALTY = XP_GOOD / 2.0;
+
+    private static final int HP_PER_NOTE = 75;
+    private static final double PERFECT_DAMAGE = 100;
+    private static final double GOOD_DAMAGE = 50;
+
+    private static final double BOMB_INTERVAL = 1.4;
+    private static final double BOMB_CLEARANCE = 0.35;
+
+    private final GameState state;
+    private final GameCharacter character;
+    private final Boss boss;
+    private final boolean arcade;
+
+    private List<Note> notes;
+    private int totalNotes;
+
+    private double gameTime = 0;
+
+    private int playerHp;
+    private final int playerMaxHp;
+    private double bossHp;
+    private int bossMaxHp;
+    private int perfectHits = 0;
+    private int goodHits = 0;
+    private int errors = 0;
+    private int resolvedCount = 0;
+    private int score = 0;
+
+    private final double goodDamage = GOOD_DAMAGE;
+    private final double perfectDamage = PERFECT_DAMAGE;
+
+    private final double perfectWindow;
+    private final double goodWindow;
+
+    private final PlayerProfile profile;
+    private final Ability ability;
+    private final int healPerPerfect;
+    private final double critMultiplier;
+    private int perfectStreak = 0;
+    private int streak = 0;
+    private int bestStreak = 0;
+    private double xpEarned = 0;
+    private boolean xpAwarded = false;
+    private final Random rng = new Random();
+
+    private boolean bombsActive = false;
+    private double nextBombTime = 0;
+
+    private boolean keepPlayingAfterDefeat = false;
+
+    public BattleModel(GameState state) {
+        this.state = state;
+        this.arcade = state.getMode() == GameMode.ARCADE;
+        this.character = state.getCharacter();
+        this.boss = GameContent.getBoss(state.getCurrentBossIndex());
+
+        this.profile = state.getProfile();
+        CharacterUpgrades upgrades = profile.getUpgrades(character.getId());
+        this.ability = character.getAbility();
+        int abilityLevel = upgrades.getAbilityLevel();
+
+        this.playerMaxHp = character.effectiveMaxHp(upgrades.getHpLevel());
+        this.playerHp = playerMaxHp;
+
+        int abilityDisplayLevel = abilityLevel + 1;
+
+        double windowMult = (ability == Ability.WIDE_HIT)
+                ? 1.0 + 0.05 * abilityDisplayLevel : 1.0;
+        this.perfectWindow = 0.06 * windowMult;
+        this.goodWindow = 0.14 * windowMult;
+
+        this.healPerPerfect = (ability == Ability.HEAL_ON_PERFECT) ? abilityDisplayLevel : 0;
+        this.critMultiplier = (ability == Ability.CRIT_ON_STREAK)
+                ? 1.0 + (0.30 + 0.01 * (abilityDisplayLevel - 1)) : 0;
+
+}
+}
