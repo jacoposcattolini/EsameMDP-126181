@@ -41,4 +41,46 @@ public class GameState {
         return mode == null ? GameMode.STORY : mode;
     }
 
+    public PlayerProfile getProfile() {
+        if (profile == null) {
+            profile = new PlayerProfile();
+        }
+        return profile;
+    }
+
+    public int getCurrentBossIndex() {
+        return currentBossIndex;
+    }
+
+    public void setCurrentBossIndex(int index) {
+        this.currentBossIndex = index;
+    }
+
+    public boolean isFinished() {
+        return currentBossIndex >= GameContent.getBossCount();
+    }
+
+    public List<BossScore> getEarnedScores() {
+        if (earnedScores == null) {
+            earnedScores = new ArrayList<>();
+        }
+        return earnedScores;
+    }
+
+    public int getTotalPoints() {
+        return getEarnedScores().stream().mapToInt(BossScore::points).sum();
+    }
+
+    public void completeCurrentBoss(BossScore score) {
+        getEarnedScores().add(score);
+        currentBossIndex++;
+    }
+
+    public long getLastSavedEpochMillis() {
+        return lastSavedEpochMillis;
+    }
+
+    public void setLastSavedEpochMillis(long lastSavedEpochMillis) {
+        this.lastSavedEpochMillis = lastSavedEpochMillis;
+    }
 }
