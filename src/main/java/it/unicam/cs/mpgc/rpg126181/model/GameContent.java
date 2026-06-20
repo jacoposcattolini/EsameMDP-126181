@@ -70,4 +70,56 @@ public final class GameContent {
                     Ability.WIDE_HIT, BASE_HP, BASE_DAMAGE)
     );
 
+    private static final List<Boss> BOSSES = List.of(
+            new Boss(
+                    "SABURO ARASAKA",
+                    "Nato nei vicoli inferiori, e' stato addestrato alla lealta' assoluta. Non "
+                            + "cerca il potere, ma l'equilibrio della tradizione in una citta' "
+                            + "caotica. E' un'arma che non discute l'ordine, solo l'esecuzione.",
+                    Difficulty.FACILE, 100, 28, 0.85, 5,
+                    ROMANCE_MUSIC, ROMANCE_BPM, ROMANCE_MUSIC_OFFSET),
+            new Boss(
+                    "MELISSA RORY",
+                    "Non controlla i vicoli, controlla i server e i flussi di dati. Gestisce il "
+                            + "sindacato come un'azienda: fredda, spietata e ossessionata "
+                            + "dall'efficienza. Ha ereditato l'impero criminale del padre, ma lo ha "
+                            + "digitalizzato. Il suo potere non viene dalla violenza fisica, ma dalla "
+                            + "ricchezza sintetica e dalla capacita' di cancellare chiunque dal "
+                            + "database della citta' con un semplice gesto.",
+                    Difficulty.MEDIO, 160, 40, 0.55, 10,
+                    DUTTY_MUSIC, DUTTY_BPM, DUTTY_MUSIC_OFFSET, BossPower.SHRINK_NOTES),
+            new Boss(
+                    "FARADAY",
+                    "Non e' solo un cantante; e' un profeta del caos. La sua musica e' un'arma che "
+                            + "incita alla rivolta contro le corporazioni. La sua gang, i "
+                            + "Synth-Rioters, usa i suoi concerti come copertura per sabotaggi e "
+                            + "furti di dati. Crede sinceramente nell'anarchia, ma la sua fama lo ha "
+                            + "reso dipendente dall'adrenalina e dal potere che esercita sulle masse "
+                            + "oppresse.",
+                    Difficulty.DIFFICILE, 220, 56, 0.40, 15,
+                    STRONGER_MUSIC, STRONGER_BPM, STRONGER_MUSIC_OFFSET, BossPower.BOMB_NOTES)
+    );
+
+    private GameContent() {
+    }
+
+    public static List<GameCharacter> getCharacters() {
+        return CHARACTERS;
+    }
+
+    public static GameCharacter getCharacterById(String id) {
+        return CHARACTERS.stream()
+                .filter(c -> c.getId().equals(id))
+                .findFirst()
+                .orElse(CHARACTERS.get(0));
+    }
+
+    public static int getBossCount() {
+        return BOSSES.size();
+    }
+
+    public static Boss getBoss(int index) {
+        return BOSSES.get(index);
+    }
+
 }
