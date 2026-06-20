@@ -94,5 +94,100 @@ public class BattleModel {
         this.critMultiplier = (ability == Ability.CRIT_ON_STREAK)
                 ? 1.0 + (0.30 + 0.01 * (abilityDisplayLevel - 1)) : 0;
 
-}
+        this.notes = GameContent.generateChart(state.getCurrentBossIndex());
+        this.totalNotes = notes.size();
+        this.bossMaxHp = totalNotes * HP_PER_NOTE;
+        this.bossHp = bossMaxHp;
+    }
+
+    public void regenerateChartForDuration(double durationSeconds) {
+        if (durationSeconds > 0 && Double.isFinite(durationSeconds)) {
+            notes = GameContent.generateMusicChart(boss, durationSeconds);
+            totalNotes = notes.size();
+            double ratio = bossMaxHp > 0 ? bossHp / bossMaxHp : 1.0;
+            bossMaxHp = totalNotes * HP_PER_NOTE;
+            bossHp = bossMaxHp * ratio;
+        }
+    }
+
+    public HitOutcome hitLane(int lane) {
+        Note best = null;
+        double bestDelta = Double.MAX_VALUE;
+        for (Note note : notes) {
+            if (note.isResolved() || note.getLane() != lane) {
+                continue;
+            }
+            double delta = Math.abs(note.getTargetTime() - gameTime);
+            if (delta < bestDelta) {
+                bestDelta = delta;
+                best = note;
+            }
+        }
+        if (best != null && bestDelta <= goodWindow) {
+            if (best.isBomb()) {
+                best.resolve();
+                streak = 0;
+                perfectStreak = 0;
+                penalizeXp();
+                damagePlayer();
+                return new HitOutcome(HitType.BOMB, lane, false);
+            }
+            best.resolve();
+            resolvedCount++;
+            streak++;
+            bestStreak = Math.max(bestStreak, streak);
+            boolean perfect = bestDelta <= perfectWindow;
+
+            double dmg = perfect ? perfectDamage : goodDamage;
+            boolean crit = false;
+            if (ability == Ability.CRIT_ON_STREAK) {
+                if (perfect) {
+                    perfectStreak++;
+                    if (perfectStreak >= 4) {
+                        crit = true;
+                        perfectStreak = 0;
+                    }
+                } else {
+                    perfectStreak = 0;
+                }
+            }
+            if (crit) {
+                dmg = perfectDamage * critMultiplier;
+            }
+
+            boolean healed = false;
+            if (perfect) {
+                perfectHits++;
+                xpEarned += XP_PERFECT;
+                score += Score.PERFECT_POINTS;
+                if (ability == Ability.HEAL_ON_PERFECT && healPerPerfect > 0) {
+                    heal(healPerPerfect);
+                    healed = true;
+                }
+            } else {
+                goodHits++;
+                xpEarned += XP_GOOD;
+                score += Score.GOOD_POINTS;
+            }
+            if (crit) {
+                score += Score.CRIT_BONUS;
+            }
+            damageBoss(dmg);
+
+            if (crit) {
+                return new HitOutcome(HitType.CRIT, lane, false);
+            } else if (perfect) {
+                return new HitOutcome(HitType.PERFECT, lane, healed);
+            } else {
+                return new HitOutcome(HitType.GOOD, lane, false);
+            }
+        }
+        errors++;
+        streak = 0;
+        perfectStreak = 0;
+        penalizeXp();
+        damagePlayer();
+        return new HitOutcome(HitType.WRONG, lane, false);
+    }
+
 }
