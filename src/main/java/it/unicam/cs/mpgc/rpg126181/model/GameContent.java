@@ -122,4 +122,68 @@ public final class GameContent {
         return BOSSES.get(index);
     }
 
+    private static double[][] sectionsFor(String musicResource) {
+        if (ROMANCE_MUSIC.equals(musicResource)) {
+            return ROMANCE_SECTIONS;
+        }
+        if (DUTTY_MUSIC.equals(musicResource)) {
+            return DUTTY_SECTIONS;
+        }
+        return STRONGER_SECTIONS;
+    }
+
+    private static double patternLength(double[][] sections) {
+        return sections[sections.length - 1][1];
+    }
+
+    public static List<Note> generateChart(int bossIndex) {
+        Boss boss = BOSSES.get(bossIndex);
+        if (boss.hasMusic()) {
+            double[][] sections = sectionsFor(boss.getMusicResource());
+            return generateMusicChart(boss, patternLength(sections));
+        }
+
+        Random random = new Random(1000L + bossIndex);
+        List<Note> notes = new ArrayList<>();
+        double time = LEAD_IN;
+        for (int i = 0; i < boss.getNoteCount(); i++) {
+            int lane = random.nextInt(LANES);
+            notes.add(new Note(time, lane));
+            double jitter = (random.nextDouble() - 0.5) * 0.25;
+            time += boss.getNoteIntervalSeconds() + jitter;
+        }
+        return notes;
+    }
+
+    public static List<Note> generateMusicChart(Boss boss, double durationSeconds) {
+        Random random = new Random(1000L);
+        List<Note> notes = new ArrayList<>();
+        double beat = 60.0 / boss.getBpm();
+        double base = LEAD_IN + boss.getMusicOffsetSeconds();
+        double scale = boss.getDifficulty().getDensityScale();
+        double[][] sections = sectionsFor(boss.getMusicResource());
+        double pattern = patternLength(sections);
+        int lastLane = -1;
+        double s = 0;
+        while (s < durationSeconds) {
+            double density = densityAt(s % pattern, sections) * scale;
+            int lane = random.nextInt(LANES);
+            if (lane == lastLane) {
+                lane = (lane + 1) % LANES;
+            }
+            lastLane = lane;
+            notes.add(new Note(base + s, lane));
+            s += beat / density;
+        }
+        return notes;
+    }
+
+    private static double densityAt(double localSeconds, double[][] sections) {
+        for (double[] section : sections) {
+            if (localSeconds >= section[0] && localSeconds < section[1]) {
+                return section[2];
+            }
+        }
+        return 1.0;
+    }
 }
