@@ -279,4 +279,104 @@ public class BattleModel {
                 && bossHp <= bossMaxHp * BossPower.THRESHOLD;
     }
 
+    public void awardXp(double fraction) {
+        if (xpAwarded) {
+            return;
+        }
+        xpAwarded = true;
+        if (!arcade && xpEarned > 0) {
+            profile.addExperience((int) (xpEarned * fraction));
+        }
+    }
+
+    public BattleResult buildResult(boolean songCompleted) {
+        int notesPlayed = resolvedCount;
+        int missedNotes = Math.max(0, notesPlayed - perfectHits - goodHits);
+        return new BattleResult(notesPlayed, perfectHits, goodHits, missedNotes,
+                gameTime, score, songCompleted);
+    }
+
+    public boolean isBossDefeated() {
+        return bossHp <= 0;
+    }
+
+    public boolean isPlayerDead() {
+        return playerHp <= 0;
+    }
+
+    public void setKeepPlayingAfterDefeat(boolean value) {
+        this.keepPlayingAfterDefeat = value;
+    }
+
+    public boolean isKeepPlayingAfterDefeat() {
+        return keepPlayingAfterDefeat;
+    }
+
+    public GameState getState() {
+        return state;
+    }
+
+    public Boss getBoss() {
+        return boss;
+    }
+
+    public GameCharacter getCharacter() {
+        return character;
+    }
+
+    public boolean isArcade() {
+        return arcade;
+    }
+
+    public Ability getAbility() {
+        return ability;
+    }
+
+    public List<Note> getNotes() {
+        return notes;
+    }
+
+    public double getGameTime() {
+        return gameTime;
+    }
+
+    public int getPlayerHp() {
+        return playerHp;
+    }
+
+    public int getPlayerMaxHp() {
+        return playerMaxHp;
+    }
+
+    public double getBossHp() {
+        return bossHp;
+    }
+
+    public int getBossMaxHp() {
+        return bossMaxHp;
+    }
+
+    public int getPerfectHits() {
+        return perfectHits;
+    }
+
+    public int getGoodHits() {
+        return goodHits;
+    }
+
+    public int getErrors() {
+        return errors;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public int getStreak() {
+        return streak;
+    }
+
+    public int getXpEarned() {
+        return (int) xpEarned;
+    }
 }
