@@ -46,4 +46,50 @@ public class SaveManager {
         }
     }
 
+    public GameState load(String name) {
+        Path file = saveDir.resolve(sanitize(name) + EXTENSION);
+        if (!Files.exists(file)) {
+            return null;
+        }
+        try (Reader reader = Files.newBufferedReader(file)) {
+            return GSON.fromJson(reader, GameState.class);
+        } catch (IOException | JsonParseException e) {
+            return null;
+        }
+    }
+
+    public void delete(String name) throws IOException {
+        Path file = saveDir.resolve(sanitize(name) + EXTENSION);
+        Files.deleteIfExists(file);
+    }
+
+    public List<SaveSlot> listSaves() {
+        List<SaveSlot> slots = new ArrayList<>();
+        if (!Files.exists(saveDir)) {
+            return slots;
+        }
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(saveDir, "*" + EXTENSION)) {
+            for (Path file : stream) {
+                String fileName = file.getFileName().toString();
+                String name = fileName.substring(0, fileName.length() - EXTENSION.length());
+                GameState state = load(name);
+                if (state != null) {
+                    slots.add(new SaveSlot(name, state));
+                }
+            }
+        } catch (IOException e) {
+            return slots;
+        }
+        slots.sort(Comparator.comparingLong(
+                (SaveSlot s) -> s.state().getLastSavedEpochMillis()).reversed());
+        return slots;
+    }
+
+    private static String sanitize(String name) {
+        String trimmed = name == null ? "" : name.trim();
+        if (trimmed.isEmpty()) {
+            trimmed = "partita";
+        }
+        return trimmed.replaceAll("[^a-zA-Z0-9 _-]", "_");
+    }
 }
