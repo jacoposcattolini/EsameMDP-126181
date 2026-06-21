@@ -31,4 +31,34 @@ public class EndView {
         return root;
     }
 
+    private void build(GameState state, Runnable onMenu) {
+        Label title = UiUtils.title("Hai concluso Beat Fighter! Per ora...");
+        Label subtitle = UiUtils.subtitle("La Cittadella del Suono e' salva. L'armonia ti appartiene.");
+        subtitle.setTextAlignment(TextAlignment.CENTER);
+
+        HBox scores = new HBox(30);
+        scores.setAlignment(Pos.CENTER);
+        for (int i = 0; i < state.getEarnedScores().size(); i++) {
+            BossScore bs = state.getEarnedScores().get(i);
+            VBox col = new VBox(8);
+            col.setAlignment(Pos.CENTER);
+            Label boss = UiUtils.body(GameContent.getBoss(i).getName());
+            Label pts = new Label(String.valueOf(bs.points()));
+            pts.setFont(Font.font("Consolas", FontWeight.BOLD, 40));
+            pts.setTextFill(UiUtils.NEON);
+            Label time = UiUtils.body("Tempo: " + Score.formatTime(bs.timeSeconds()));
+            time.setTextFill(UiUtils.MUTED);
+            col.getChildren().addAll(pts, time, boss);
+            scores.getChildren().add(col);
+        }
+
+        Label total = new Label("PUNTEGGIO TOTALE: " + state.getTotalPoints());
+        total.setFont(Font.font("Consolas", FontWeight.BOLD, 32));
+        total.setTextFill(UiUtils.NEON2);
+
+        Button menu = UiUtils.primaryButton("Torna al menu");
+        menu.setOnAction(e -> onMenu.run());
+
+        root.getChildren().addAll(title, subtitle, scores, total, menu);
+    }
 }
