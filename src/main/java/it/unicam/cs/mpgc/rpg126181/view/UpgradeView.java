@@ -85,5 +85,45 @@ public class UpgradeView {
         Label effect = UiUtils.body(c.getAbility().effectAt(u.getAbilityLevel()));
         effect.setTextFill(UiUtils.NEON);
 
-}
+        HBox stats = new HBox(14,
+                upgradeBox(c, UpgradeType.HP,
+                        "Vita", c.effectiveMaxHp(u.getHpLevel()) + " HP", u.getHpLevel()),
+                upgradeBox(c, UpgradeType.ABILITY,
+                        "Abilita'", "Liv. " + (u.getAbilityLevel() + 1), u.getAbilityLevel()));
+        stats.setAlignment(Pos.CENTER);
+
+        VBox card = new VBox(12, name, ability, effect, stats);
+        card.setPadding(new Insets(18));
+        card.setStyle("-fx-background-color: #140a26; -fx-background-radius: 6;"
+                + "-fx-border-color: #2a1a44; -fx-border-width: 1; -fx-border-radius: 6;");
+        return card;
+    }
+
+    private VBox upgradeBox(GameCharacter c, UpgradeType type, String label, String value, int level) {
+        Label l = UiUtils.body(label);
+        l.setTextFill(UiUtils.TEXT);
+
+        Label v = new Label(value);
+        v.setFont(Font.font("Consolas", FontWeight.BOLD, 18));
+        v.setTextFill(UiUtils.NEON);
+
+        int cost = profile.costFor(c.getId(), type);
+        boolean affordable = profile.canUpgrade(c.getId(), type);
+        boolean maxed = profile.isMaxLevel(c.getId(), type);
+
+        Button buy = UiUtils.secondaryButton(maxed ? "MAX" : "+ (" + cost + " XP)");
+        buy.setPrefWidth(170);
+        buy.setDisable(!affordable);
+        buy.setOnAction(e -> onBuy.accept(c, type));
+
+        Label lvl = UiUtils.body("Liv. " + (level + 1));
+        lvl.setTextFill(UiUtils.MUTED);
+
+        VBox box = new VBox(6, l, v, lvl, buy);
+        box.setAlignment(Pos.CENTER);
+        box.setPrefWidth(230);
+        box.setPadding(new Insets(10));
+        box.setStyle("-fx-background-color: #1c1030; -fx-background-radius: 6;");
+        return box;
+    }
 }
