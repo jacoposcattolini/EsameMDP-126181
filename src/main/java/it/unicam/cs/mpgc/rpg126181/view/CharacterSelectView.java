@@ -43,4 +43,44 @@ public class CharacterSelectView {
         build();
     }
 
+    public Parent getRoot() {
+        return root;
+    }
+
+    private void build() {
+        Label title = UiUtils.title(headerText);
+        title.setStyle("-fx-background-radius: 8; -fx-padding: 10 28 10 28;");
+
+        HBox cards = new HBox(30);
+        cards.setAlignment(Pos.BOTTOM_CENTER);
+        for (GameCharacter character : GameContent.getCharacters()) {
+            cards.getChildren().add(buildCard(character));
+        }
+
+        Button back = UiUtils.backButton("← Indietro");
+        back.setOnAction(e -> onBack.run());
+
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        root.getChildren().addAll(title, spacer, cards, back);
+    }
+
+    private VBox buildCard(GameCharacter character) {
+        Label name = new Label(character.getName());
+        name.setFont(Font.font("Verdana", FontWeight.BOLD, 26));
+        name.setTextFill(UiUtils.ACCENT);
+
+        Label power = UiUtils.body("Potere: " + character.getPower());
+        power.setTextFill(Color.web("#ffd166"));
+
+        int hpLevel = 0;
+        int abilityLevel = 0;
+        if (profile != null) {
+            CharacterUpgrades u = profile.getUpgrades(character.getId());
+            hpLevel = u.getHpLevel();
+            abilityLevel = u.getAbilityLevel();
+        }
+
+}
 }
