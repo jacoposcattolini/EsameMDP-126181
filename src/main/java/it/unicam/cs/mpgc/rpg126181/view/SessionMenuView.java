@@ -47,5 +47,49 @@ public class SessionMenuView {
             buttons.getChildren().add(upgrade);
         }
 
-}
+        Button retry = UiUtils.coloredButton("↻  RIPROVA", "#a020f0");
+        retry.setOnAction(e -> onRetry.run());
+        buttons.getChildren().add(retry);
+
+        if (arcade) {
+            Button other = UiUtils.secondaryButton("🦹  SCEGLI UN ALTRO VILLAIN");
+            other.setOnAction(e -> onProceed.run());
+            buttons.getChildren().add(other);
+        } else if (won) {
+            boolean lastBoss = state.getCurrentBossIndex() >= GameContent.getBossCount() - 1;
+            Button next = UiUtils.coloredButton(lastBoss ? "🏁  VEDI IL FINALE" : "▶  PROSSIMO VILLAIN", "#9dff00");
+            next.setOnAction(e -> onProceed.run());
+            buttons.getChildren().add(next);
+        }
+
+        Button save = UiUtils.coloredButton("💾  SALVA", "#05d9e8");
+        save.setOnAction(e -> onSave.run());
+        buttons.getChildren().add(save);
+
+        Button saveExit = UiUtils.coloredButton("💾  SALVA ED ESCI", "#05d9e8");
+        saveExit.setOnAction(e -> onSaveExit.run());
+        buttons.getChildren().add(saveExit);
+
+        Button exitNoSave = UiUtils.coloredButton("✖  ESCI SENZA SALVARE", "#ff1e3c");
+        exitNoSave.setOnAction(e -> onExitNoSave.run());
+        buttons.getChildren().add(exitNoSave);
+
+        VBox panel;
+        if (arcade) {
+            panel = new VBox(18, title, buttons);
+        } else {
+            Label xp = new Label("XP della partita: " + state.getProfile().getExperience());
+            xp.setFont(Font.font("Consolas", FontWeight.BOLD, 22));
+            xp.setTextFill(UiUtils.GREEN);
+            panel = new VBox(18, title, xp, buttons);
+        }
+        panel.setAlignment(Pos.CENTER);
+        panel.setMaxWidth(620);
+        panel.setPadding(new Insets(36, 48, 36, 48));
+        panel.setStyle("-fx-background-color: #000000;"
+                + "-fx-background-radius: 16; -fx-border-color: #000000;"
+                + "-fx-border-width: 2; -fx-border-radius: 16;");
+
+        root.getChildren().add(panel);
+    }
 }
