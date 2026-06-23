@@ -232,5 +232,113 @@ public class BattleView {
             g.strokeOval(cx - r, y - r, r * 2, r * 2);
         }
 
+        drawEffects(laneWidth);
+        g.restore();
+
+        effects.removeIf(fx -> gameTime - fx.start > fx.duration);
+
+        renderHud();
+    }
+
+    private void drawEffects(double laneWidth) {
+        double gameTime = model.getGameTime();
+        for (Fx fx : effects) {
+            double age = gameTime - fx.start;
+            if (age < 0 || age > fx.duration) {
+                continue;
+            }
+            double p = age / fx.duration;
+            double cx = fx.lane * laneWidth + laneWidth / 2;
+            Color c = fx.color;
+
+            if (fx.type == FxType.SPARK) {
+                double alpha = 1 - p;
+                double r = 34 + p * 55 * fx.power;
+                g.setStroke(Color.color(c.getRed(), c.getGreen(), c.getBlue(), alpha));
+                g.setLineWidth(5 * (1 - p) + 1);
+                g.strokeOval(cx - r, HIT_LINE_Y - r, r * 2, r * 2);
+
+                int spikes = 8;
+                double inner = 34;
+                double outer = 34 + p * 70 * fx.power;
+                for (int i = 0; i < spikes; i++) {
+                    double ang = Math.PI * 2 * i / spikes;
+                    g.strokeLine(
+                            cx + Math.cos(ang) * inner, HIT_LINE_Y + Math.sin(ang) * inner,
+                            cx + Math.cos(ang) * outer, HIT_LINE_Y + Math.sin(ang) * outer);
+                }
+            } else {
+                double alpha = (1 - p) * 0.85;
+                g.setStroke(Color.color(c.getRed(), c.getGreen(), c.getBlue(), alpha));
+                g.setLineWidth(14 * (1 - p) + 2);
+                g.strokeLine(cx, HIT_LINE_Y, cx, 66);
+                g.setFill(Color.color(1, 1, 1, alpha));
+                g.fillOval(cx - 8, 58, 16, 16);
+            }
+        }
+    }
+
+    private void renderHud() {
+        double gameTime = model.getGameTime();
+        boolean arcade = model.isArcade();
+
+        if (gameTime < bossFlashUntil) {
+            double a = Math.max(0, (bossFlashUntil - gameTime) / 0.18 * 0.55);
+            g.setFill(Color.color(1, 1, 1, a));
+            g.fillRect(0, 0, W, 70);
+        }
+        if (gameTime < playerFlashUntil) {
+            double a = Math.max(0, (playerFlashUntil - gameTime) / 0.30 * 0.5);
+            g.setFill(Color.color(1, 0.18, 0.3, a));
+            g.fillRect(0, H - 130, W, 130);
+        }
+        if (gameTime < healFlashUntil) {
+            double a = Math.max(0, (healFlashUntil - gameTime) / 0.30 * 0.4);
+            g.setFill(Color.color(0.1, 1, 0.4, a));
+            g.fillRect(0, H - 130, W, 130);
+        }
+
+        g.setFont(Font.font("Verdana", FontWeight.BOLD, 20));
+        g.setTextAlign(TextAlignment.LEFT);
+        g.setFill(UiUtils.TEXT);
+        g.fillText(model.getBoss().getName(), 20, 30);
+        g.setTextAlign(TextAlignment.RIGHT);
+        g.setFill(Color.web("#ff8fae"));
+        g.fillText((int) Math.ceil(model.getBossHp()) + " / " + model.getBossMaxHp() + " HP", W - 20, 30);
+        g.setTextAlign(TextAlignment.LEFT);
+        drawBar(20, 42, W - 40, 18, model.getBossHp() / model.getBossMaxHp(), Color.web("#ff2a6d"));
+
+        g.setFill(UiUtils.TEXT);
+        if (arcade) {
+            g.fillText(model.getCharacter().getName(), 20, H - 100);
+        } else {
+            g.fillText(model.getCharacter().getName() + "  ❤ " + model.getPlayerHp()
+                    + "/" + model.getPlayerMaxHp(), 20, H - 100);
+            drawBar(20, H - 88, 360, 16,
+                    (double) model.getPlayerHp() / model.getPlayerMaxHp(), Color.web("#05d9e8"));
+        }
+
+        g.setTextAlign(TextAlignment.RIGHT);
+        g.setFont(Font.font("Verdana", FontWeight.BOLD, 18));
+        g.setFill(Color.web("#ffd166"));
+        g.fillText("Punti: " + model.getScore() + "   Perfect: " + model.getPerfectHits()
+                + "   OK: " + model.getGoodHits() + "   Errori: " + model.getErrors(), W - 20, H - 100);
+        g.setFont(Font.font("Verdana", FontWeight.BOLD, 16));
+        g.setFill(Color.web("#05d9e8"));
+        g.fillText(arcade ? "Streak: " + model.getStreak()
+                : "Streak: " + model.getStreak() + "   XP: +" + model.getXpEarned(), W - 20, H - 54);
+
+        g.setTextAlign(TextAlignment.LEFT);
+        g.setFont(Font.font("Verdana", 14));
+        g.setFill(Color.web("#9aa"));
+        g.fillText("Abilita': " + model.getAbility().getDisplayName(), 20, H - 54);
+
+        if (gameTime < feedbackUntil) {
+            g.setTextAlign(TextAlignment.CENTER);
+            g.setFont(Font.font("Verdana", FontWeight.BOLD, 40));
+            g.setFill(feedbackColor);
+            g.fillText(feedback, W / 2, HIT_LINE_Y - 120);
+        }
+
 }
 }
