@@ -112,4 +112,66 @@ public final class UiUtils {
                 + "-fx-cursor: hand;";
     }
 
+    private static Button neonButton(String text, String hex) {
+        Button button = new Button(text);
+        button.setFont(Font.font(TITLE_FONT, FontWeight.BOLD, 20));
+        button.setTextFill(Color.web(hex));
+        button.setPrefWidth(380);
+        button.setStyle(neonStyle(hex, 0.10));
+        button.setOnMouseEntered(e -> {
+            button.setStyle(neonStyle(hex, 0.28));
+            button.setTextFill(Color.WHITE);
+        });
+        button.setOnMouseExited(e -> {
+            button.setStyle(neonStyle(hex, 0.10));
+            button.setTextFill(Color.web(hex));
+        });
+        return button;
+    }
+
+    private static String neonStyle(String hex, double fillAlpha) {
+        Color c = Color.web(hex);
+        String rgba = String.format("rgba(%d,%d,%d,%.2f)",
+                (int) (c.getRed() * 255), (int) (c.getGreen() * 255), (int) (c.getBlue() * 255), fillAlpha);
+        return "-fx-background-color: " + rgba + ";"
+                + "-fx-border-color: " + hex + ";"
+                + "-fx-border-width: 2;"
+                + "-fx-background-radius: 4;"
+                + "-fx-border-radius: 4;"
+                + "-fx-padding: 12 24 12 24;"
+                + "-fx-cursor: hand;";
+    }
+
+    public static void fillBackground(Region region, Color color) {
+        region.setBackground(backgroundOf(color));
+    }
+
+    public static void glassPanel(Region region, Color accent) {
+        CornerRadii radii = new CornerRadii(16);
+        region.setBackground(new Background(new BackgroundFill(
+                Color.color(0.02, 0.01, 0.06, 0.74), radii, null)));
+        region.setBorder(new Border(new BorderStroke(accent,
+                BorderStrokeStyle.SOLID, radii, new BorderWidths(2))));
+        glow(region, accent, 22);
+    }
+
+    public static void backgroundImage(Region region, String resource, Color fallback) {
+        backgroundImage(region, resource, fallback, BackgroundPosition.CENTER);
+    }
+
+    public static void backgroundImage(Region region, String resource, Color fallback,
+                                       BackgroundPosition position) {
+        var url = UiUtils.class.getResource(resource);
+        if (url == null) {
+            fillBackground(region, fallback);
+            return;
+        }
+        Image image = new Image(url.toExternalForm());
+        BackgroundSize cover = new BackgroundSize(
+                BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, false, true);
+        BackgroundImage bg = new BackgroundImage(image,
+                BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
+                position, cover);
+        region.setBackground(new Background(bg));
+    }
 }
