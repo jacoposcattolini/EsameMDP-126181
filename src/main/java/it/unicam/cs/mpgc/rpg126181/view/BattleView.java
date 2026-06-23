@@ -457,4 +457,117 @@ public class BattleView {
         setOverlay(overlayBox(title, resume, save, saveExit, session, quit));
     }
 
+    public void showDefeat(Runnable onNext, Runnable onKeepPlaying) {
+        Label title = UiUtils.title("Sconfitto!");
+        title.setTextFill(UiUtils.GREEN);
+        Label msg = UiUtils.body("Hai sconfitto " + model.getBoss().getName()
+                + ". Vuoi passare al prossimo VILLAIN o continuare la traccia?");
+        msg.setTextAlignment(TextAlignment.CENTER);
+
+        Button next = UiUtils.primaryButton("▶  Prossimo VILLAIN");
+        next.setOnAction(e -> onNext.run());
+        Button keepPlaying = UiUtils.secondaryButton("🎵  Continua la traccia");
+        keepPlaying.setOnAction(e -> onKeepPlaying.run());
+
+        VBox box = new VBox(20, title, msg, next, keepPlaying);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(40));
+        box.setMaxSize(560, 460);
+        box.setStyle("-fx-background-color: rgba(6,19,10,0.96);"
+                + "-fx-background-radius: 6; -fx-border-color: #9dff00;"
+                + "-fx-border-width: 2; -fx-border-radius: 6;");
+        UiUtils.glow(box, UiUtils.GREEN, 16);
+        setOverlay(box);
+    }
+
+    public void showResult(BattleResult result, Runnable onMenu) {
+        clearOverlay();
+        Label title = UiUtils.title(model.getBoss().getName());
+
+        Label time = UiUtils.body("Tempo: " + Score.formatTime(result.timeSeconds()));
+        time.setTextAlignment(TextAlignment.CENTER);
+
+        Label stats = UiUtils.body(String.format(
+                "Colpi perfetti: %d%nColpi buoni: %d%nErrori: %d su %d note",
+                result.perfectHits(), result.goodHits(),
+                result.missedNotes(), result.totalNotes()));
+        stats.setTextAlignment(TextAlignment.CENTER);
+
+        VBox box = new VBox(18);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(40));
+        box.setMaxSize(650, 540);
+        box.setStyle(panelStyle("#ff2a6d"));
+        UiUtils.glow(box, UiUtils.NEON2, 16);
+        box.getChildren().add(title);
+
+        if (result.songCompleted()) {
+            Label points = new Label("PUNTEGGIO: " + result.score());
+            points.setFont(Font.font("Consolas", FontWeight.BOLD, 36));
+            points.setTextFill(UiUtils.NEON);
+            box.getChildren().add(points);
+        }
+        box.getChildren().addAll(time, stats);
+
+        Button session = UiUtils.primaryButton("Menu");
+        session.setOnAction(e -> onMenu.run());
+        box.getChildren().add(session);
+
+        setOverlay(box);
+    }
+
+    public void showGameOver(Runnable onRetry, Runnable onMenu) {
+        Label title = UiUtils.title("Sconfitta");
+        Label msg = UiUtils.body(model.getBoss().getName() + " ha avuto la meglio. Riprova!");
+        msg.setTextAlignment(TextAlignment.CENTER);
+
+        Button retry = UiUtils.coloredButton("↻  Riprova", "#a020f0");
+        retry.setOnAction(e -> onRetry.run());
+        Button session = UiUtils.secondaryButton("Menu");
+        session.setOnAction(e -> onMenu.run());
+
+        setOverlay(overlayBox(title, msg, retry, session));
+    }
+
+    private VBox overlayBox(Node... children) {
+        VBox box = new VBox(20, children);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(40));
+        box.setMaxSize(520, 560);
+        box.setStyle(panelStyle("#ff2a6d"));
+        UiUtils.glow(box, UiUtils.NEON2, 16);
+        return box;
+    }
+
+    private static String panelStyle(String borderHex) {
+        return "-fx-background-color: rgba(10,6,19,0.96);"
+                + "-fx-background-radius: 6; -fx-border-color: " + borderHex + ";"
+                + "-fx-border-width: 2; -fx-border-radius: 6;";
+    }
+
+    private void setOverlay(VBox box) {
+        clearOverlay();
+        overlay = box;
+        root.getChildren().add(box);
+    }
+
+    private enum FxType {SPARK, BEAM}
+
+    private static final class Fx {
+        final FxType type;
+        final double start;
+        final double duration;
+        final int lane;
+        final Color color;
+        final double power;
+
+        Fx(FxType type, double start, double duration, int lane, Color color, double power) {
+            this.type = type;
+            this.start = start;
+            this.duration = duration;
+            this.lane = lane;
+            this.color = color;
+            this.power = power;
+        }
+    }
 }
