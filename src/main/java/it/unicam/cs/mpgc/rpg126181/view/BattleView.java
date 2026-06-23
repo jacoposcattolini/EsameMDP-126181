@@ -126,4 +126,111 @@ public class BattleView {
         }
     }
 
+    public void showMiss() {
+        playerHit();
+        showFeedback("MISS", Color.web("#ff4d6d"));
+    }
+
+    public void setCountdown(boolean counting, double remaining) {
+        this.counting = counting;
+        this.countdownRemaining = remaining;
+    }
+
+    private void spawnHitFx(int lane, boolean perfect) {
+        double t = model.getGameTime();
+        Color c = LANE_COLORS[lane];
+        double power = perfect ? 1.4 : 1.0;
+        effects.add(new Fx(FxType.SPARK, t, 0.35, lane, c, power));
+        effects.add(new Fx(FxType.BEAM, t, 0.22, lane, c, power));
+        bossFlashUntil = t + 0.18;
+    }
+
+    private void playerHit() {
+        double t = model.getGameTime();
+        playerFlashUntil = t + 0.30;
+        shakeUntil = t + 0.25;
+    }
+
+    private void healFlash() {
+        healFlashUntil = model.getGameTime() + 0.3;
+    }
+
+    private void showFeedback(String text, Color color) {
+        feedback = text;
+        feedbackColor = color;
+        feedbackUntil = model.getGameTime() + 0.5;
+    }
+
+    public void render() {
+        double gameTime = model.getGameTime();
+
+        drawBattleBackground(0, 0, W, H, false);
+
+        double laneWidth = W / GameContent.LANES;
+        double pixelsPerSecond = HIT_LINE_Y / BattleModel.APPROACH_TIME;
+
+        double dx = 0;
+        double dy = 0;
+        if (gameTime < shakeUntil) {
+            double k = Math.max(0, (shakeUntil - gameTime) / 0.25);
+            double mag = 9 * k;
+            dx = (Math.random() - 0.5) * 2 * mag;
+            dy = (Math.random() - 0.5) * 2 * mag;
+        }
+
+        g.save();
+        g.translate(dx, dy);
+        drawBattleBackground(-24, -24, W + 48, H + 48, true);
+
+        for (int lane = 0; lane < GameContent.LANES; lane++) {
+            double x = lane * laneWidth;
+            g.setStroke(Color.web("#241537"));
+            g.setLineWidth(2);
+            g.strokeLine(x, 0, x, HIT_LINE_Y + 40);
+        }
+        g.setStroke(Color.BLACK);
+        g.setLineWidth(3);
+        g.strokeLine(0, HIT_LINE_Y, W, HIT_LINE_Y);
+
+        for (int lane = 0; lane < GameContent.LANES; lane++) {
+            double cx = lane * laneWidth + laneWidth / 2;
+            g.setStroke(LANE_COLORS[lane]);
+            g.setLineWidth(3);
+            g.strokeOval(cx - 34, HIT_LINE_Y - 34, 68, 68);
+            g.setFill(LANE_COLORS[lane]);
+            g.setFont(Font.font("Verdana", FontWeight.BOLD, 24));
+            g.setTextAlign(TextAlignment.CENTER);
+            g.fillText(LANE_LABELS[lane], cx, HIT_LINE_Y + 9);
+        }
+
+        boolean shrink = model.notesShrunk();
+        for (Note note : model.getNotes()) {
+            if (note.isResolved()) {
+                continue;
+            }
+            double y = HIT_LINE_Y - (note.getTargetTime() - gameTime) * pixelsPerSecond;
+            if (y < -40 || y > HIT_LINE_Y + 40) {
+                continue;
+            }
+            double cx = note.getLane() * laneWidth + laneWidth / 2;
+            if (note.isBomb()) {
+                double r = 26;
+                g.setFill(Color.web("#1a0608"));
+                g.fillOval(cx - r, y - r, r * 2, r * 2);
+                g.setStroke(Color.web("#ff3b3b"));
+                g.setLineWidth(3);
+                g.strokeOval(cx - r, y - r, r * 2, r * 2);
+                g.strokeLine(cx - 11, y - 11, cx + 11, y + 11);
+                g.strokeLine(cx - 11, y + 11, cx + 11, y - 11);
+                continue;
+            }
+            double r = shrink ? 15 : 28;
+            g.setFill(LANE_COLORS[note.getLane()]);
+            g.fillOval(cx - r, y - r, r * 2, r * 2);
+            g.setStroke(Color.WHITE);
+            g.setLineWidth(2);
+            g.strokeOval(cx - r, y - r, r * 2, r * 2);
+        }
+
+}
 }
