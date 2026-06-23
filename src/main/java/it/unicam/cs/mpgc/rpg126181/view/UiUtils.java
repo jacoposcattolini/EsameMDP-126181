@@ -57,4 +57,59 @@ public final class UiUtils {
         return label;
     }
 
+    public static Label waveTitle(String text) {
+        Label label = new Label(text);
+        label.setFont(Font.font(TITLE_FONT, FontWeight.BOLD, 64));
+        label.setTextFill(GOLD);
+        return label;
+    }
+
+    public static Label subtitle(String text) {
+        Label label = new Label(text);
+        label.setFont(Font.font(TITLE_FONT, FontWeight.BOLD, 28));
+        label.setTextFill(NEON);
+        return label;
+    }
+
+    public static Label body(String text) {
+        Label label = new Label(text);
+        label.setFont(Font.font("Verdana", 18));
+        label.setTextFill(TEXT);
+        label.setWrapText(true);
+        return label;
+    }
+
+    public static Button primaryButton(String text) {
+        return neonButton(text, "#ff2a6d");
+    }
+
+    public static Button secondaryButton(String text) {
+        return neonButton(text, "#05d9e8");
+    }
+
+    public static Button coloredButton(String text, String hex) {
+        return neonButton(text, hex);
+    }
+
+    public static Button backButton(String text) {
+        Button button = new Button(text);
+        button.setFont(Font.font(TITLE_FONT, FontWeight.BOLD, 20));
+        button.setTextFill(RED);
+        button.setPrefWidth(380);
+        button.setStyle(backStyle());
+        button.setOnMouseEntered(e -> button.setTextFill(Color.WHITE));
+        button.setOnMouseExited(e -> button.setTextFill(RED));
+        return button;
+    }
+
+    private static String backStyle() {
+        return "-fx-background-color: #000000;"
+                + "-fx-border-color: #ff1e3c;"
+                + "-fx-border-width: 2;"
+                + "-fx-background-radius: 4;"
+                + "-fx-border-radius: 4;"
+                + "-fx-padding: 12 24 12 24;"
+                + "-fx-cursor: hand;";
+    }
+
 }
