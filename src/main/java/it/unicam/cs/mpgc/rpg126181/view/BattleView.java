@@ -340,5 +340,121 @@ public class BattleView {
             g.fillText(feedback, W / 2, HIT_LINE_Y - 120);
         }
 
-}
+        g.setTextAlign(TextAlignment.CENTER);
+        g.setFont(Font.font("Verdana", 14));
+        g.setFill(Color.web("#777"));
+        g.fillText("ESC: pausa / salva ed esci", W / 2, H - 20);
+
+        if (counting) {
+            g.setFill(Color.color(0, 0, 0, 0.55));
+            g.fillRect(0, 0, W, H);
+            g.setTextAlign(TextAlignment.CENTER);
+            g.setFont(Font.font("Verdana", FontWeight.BOLD, 130));
+            g.setFill(UiUtils.NEON2);
+            g.fillText(String.valueOf((int) Math.ceil(countdownRemaining)), W / 2, H / 2 + 30);
+            g.setFont(Font.font("Verdana", FontWeight.BOLD, 26));
+            g.setFill(UiUtils.TEXT);
+            g.fillText("Si riprende...", W / 2, H / 2 + 90);
+        }
+    }
+
+    private void drawBattleBackground(double x, double y, double w, double h, boolean veil) {
+        if (hasImageBackground) {
+            g.clearRect(x, y, w, h);
+            if (veil) {
+                g.setFill(Color.color(0, 0, 0, 0.45));
+                g.fillRect(x, y, w, h);
+            }
+        } else {
+            g.setFill(Color.web("#0a0613"));
+            g.fillRect(x, y, w, h);
+        }
+    }
+
+    private void drawBar(double x, double y, double width, double height, double ratio, Color color) {
+        ratio = Math.max(0, Math.min(1, ratio));
+        g.setFill(Color.web("#241537"));
+        g.fillRoundRect(x, y, width, height, 8, 8);
+        g.setFill(color);
+        g.fillRoundRect(x, y, width * ratio, height, 8, 8);
+        g.setStroke(Color.web("#11111a"));
+        g.setLineWidth(1);
+        g.strokeRoundRect(x, y, width, height, 8, 8);
+    }
+
+    public void clearOverlay() {
+        if (overlay != null) {
+            root.getChildren().remove(overlay);
+            overlay = null;
+        }
+    }
+
+    public void showIntro(Runnable onStart, Runnable onChangeStar) {
+        Boss boss = model.getBoss();
+        Label title = UiUtils.title(boss.getName());
+
+        VBox box = new VBox(16);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(34, 44, 34, 44));
+        box.setMaxWidth(900);
+        box.setStyle(panelStyle("#ff2a6d"));
+        UiUtils.glow(box, UiUtils.NEON2, 16);
+        box.getChildren().add(title);
+
+        if (model.getState().getMode() == GameMode.STORY) {
+            Label chapter = UiUtils.subtitle("Capitolo " + (model.getState().getCurrentBossIndex() + 1)
+                    + " di " + GameContent.getBossCount());
+            chapter.setTextFill(Color.web("#ffd166"));
+            box.getChildren().add(chapter);
+        }
+
+        String diffText = "Difficolta': " + boss.getDifficulty().getDisplayName();
+        Label who = UiUtils.body(model.isArcade() ? diffText
+                : diffText + "   ·   STAR: " + model.getCharacter().getName());
+        who.setTextFill(UiUtils.MUTED);
+        who.setTextAlignment(TextAlignment.CENTER);
+        box.getChildren().add(who);
+
+        if (model.getState().getMode() == GameMode.STORY) {
+            Label villainStory = UiUtils.body(boss.getStory());
+            villainStory.setMaxWidth(820);
+            villainStory.setTextAlignment(TextAlignment.CENTER);
+            villainStory.setStyle("-fx-line-spacing: 6;");
+            box.getChildren().add(villainStory);
+        }
+
+        Label controls = UiUtils.body("Premi i tasti A/S/K/L a tempo per sconfiggere i nemici");
+        controls.setTextFill(UiUtils.GREEN);
+        controls.setTextAlignment(TextAlignment.CENTER);
+
+        Button start = UiUtils.primaryButton("⚔  Inizia il combattimento");
+        start.setOnAction(e -> onStart.run());
+
+        box.getChildren().addAll(controls, start);
+
+        if (!model.isArcade() && onChangeStar != null) {
+            Button change = UiUtils.secondaryButton("🔄  Scegli STAR");
+            change.setOnAction(e -> onChangeStar.run());
+            box.getChildren().add(change);
+        }
+
+        setOverlay(box);
+    }
+
+    public void showPause(Runnable onResume, Runnable onSave, Runnable onSaveExit,
+                          Runnable onMenu, Runnable onQuit) {
+        Label title = UiUtils.title("Pausa");
+        Button resume = UiUtils.coloredButton("Riprendi", "#9dff00");
+        resume.setOnAction(e -> onResume.run());
+        Button save = UiUtils.secondaryButton("Salva");
+        save.setOnAction(e -> onSave.run());
+        Button saveExit = UiUtils.secondaryButton("Salva ed esci");
+        saveExit.setOnAction(e -> onSaveExit.run());
+        Button session = UiUtils.secondaryButton("Menu");
+        session.setOnAction(e -> onMenu.run());
+        Button quit = UiUtils.coloredButton("Esci senza salvare", "#ff1e3c");
+        quit.setOnAction(e -> onQuit.run());
+        setOverlay(overlayBox(title, resume, save, saveExit, session, quit));
+    }
+
 }
