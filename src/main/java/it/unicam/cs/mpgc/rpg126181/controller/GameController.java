@@ -157,4 +157,78 @@ public class GameController {
         }
     }
 
+    public void startBattle(GameState state) {
+        setRoot(new BattleController(this, state).getRoot());
+    }
+
+    public void retryBattleWithCharacterChoice(GameState state, Runnable onBack) {
+        setRoot(new CharacterSelectView("SCEGLI LA TUA STAR", state.getProfile(),
+                state.getMode() == GameMode.STORY,
+                c -> {
+                    state.setCharacterId(c.getId());
+                    startBattle(state);
+                },
+                onBack).getRoot());
+    }
+
+    public void showSessionMenu(GameState state, BossScore score, boolean won) {
+        showSessionMenu(state, score, won, new boolean[]{false});
+    }
+
+    private void showSessionMenu(GameState state, BossScore score, boolean won, boolean[] committed) {
+        Runnable reopen = () -> showSessionMenu(state, score, won, committed);
+        Runnable commitWin = () -> {
+            if (won && state.getMode() == GameMode.STORY && !committed[0]) {
+                state.completeCurrentBoss(score);
+                committed[0] = true;
+            }
+        };
+        Runnable onProceed = state.getMode() == GameMode.ARCADE
+                ? () -> showBossSelect(state, reopen)
+                : () -> {
+                    commitWin.run();
+                    if (state.isFinished()) {
+                        showEnd(state);
+                    } else {
+                        startBattle(state);
+                    }
+                };
+        setRoot(new SessionMenuView(state, won,
+                () -> showUpgrades(state, reopen),
+                () -> retryBattleWithCharacterChoice(state, reopen),
+                onProceed,
+                () -> sessionSave(state, commitWin, reopen),
+                () -> sessionSave(state, commitWin, this::showMainMenu),
+                this::showMainMenu).getRoot());
+    }
+
+    public void showUpgrades(GameState state, Runnable onBack) {
+        PlayerProfile profile = state.getProfile();
+        setRoot(new UpgradeView(profile, (character, type) -> {
+            if (profile.upgrade(character.getId(), type)) {
+                showUpgrades(state, onBack);
+            }
+        }, onBack).getRoot());
+    }
+
+    public void showEnd(GameState state) {
+        setRoot(new EndView(state, this::showMainMenu).getRoot());
+    }
+
+    private void sessionSave(GameState state, Runnable commitWin, Runnable after) {
+        TextInputDialog dialog = new TextInputDialog(
+                state.getCharacter().getName() + " - VILLAIN " + (state.getCurrentBossIndex() + 1));
+        dialog.setTitle("Salva partita");
+        dialog.setHeaderText("Salva la partita");
+        dialog.setContentText("Nome del salvataggio:");
+        Optional<String> name = dialog.showAndWait();
+        name.ifPresent(n -> {
+            commitWin.run();
+            try {
+                saveManager.save(n, state);
+            } catch (Exception ignored) {
+            }
+            after.run();
+        });
+    }
 }
