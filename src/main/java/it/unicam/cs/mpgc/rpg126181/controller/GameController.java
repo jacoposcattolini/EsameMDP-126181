@@ -81,4 +81,80 @@ public class GameController {
         }
     }
 
+    private void confirmDelete(SaveSlot slot) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Elimina salvataggio");
+        alert.setHeaderText("Eliminare il salvataggio \"" + slot.name() + "\"?");
+        alert.setContentText("L'operazione non puo' essere annullata.");
+        alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
+        Optional<ButtonType> choice = alert.showAndWait();
+        if (choice.isPresent() && choice.get() == ButtonType.YES) {
+            try {
+                saveManager.delete(slot.name());
+            } catch (Exception ignored) {
+            }
+            showLoadGame();
+        }
+    }
+
+    public void startNewGame() {
+        setRoot(new ModeSelectView(
+                () -> showCharacterSelect(GameMode.STORY),
+                this::startArcade,
+                this::showMainMenu).getRoot());
+    }
+
+    public void showCharacterSelect(GameMode mode) {
+        setRoot(new CharacterSelectView("SCEGLI LA TUA STAR", null, mode == GameMode.STORY,
+                c -> onCharacterChosen(c, mode), this::showMainMenu).getRoot());
+    }
+
+    public void showChangeCharacter(GameState state, Runnable afterChoose) {
+        setRoot(new CharacterSelectView("SCEGLI LA TUA STAR", state.getProfile(),
+                state.getMode() == GameMode.STORY,
+                c -> {
+                    state.setCharacterId(c.getId());
+                    afterChoose.run();
+                },
+                this::showMainMenu).getRoot());
+    }
+
+    public void onCharacterChosen(GameCharacter character, GameMode mode) {
+        GameState state = new GameState(character.getId(), mode);
+        if (mode == GameMode.ARCADE) {
+            showBossSelect(state, this::startNewGame);
+        } else {
+            startBattle(state);
+        }
+    }
+
+    public void startArcade() {
+        GameState state = new GameState(GameContent.getCharacters().get(0).getId(), GameMode.ARCADE);
+        showArcadeStarSelect(state);
+    }
+
+    private void showArcadeStarSelect(GameState state) {
+        setRoot(new CharacterSelectView("SCEGLI LA TUA STAR", state.getProfile(), false,
+                c -> {
+                    state.setCharacterId(c.getId());
+                    showBossSelect(state, () -> showArcadeStarSelect(state));
+                },
+                this::showMainMenu).getRoot());
+    }
+
+    public void showBossSelect(GameState state, Runnable onBack) {
+        setRoot(new BossSelectView(index -> {
+            state.setCurrentBossIndex(index);
+            startBattle(state);
+        }, onBack).getRoot());
+    }
+
+    public void continueGame(GameState state) {
+        if (state.getMode() == GameMode.STORY && state.isFinished()) {
+            showEnd(state);
+        } else {
+            showSessionMenu(state, null, false);
+        }
+    }
+
 }
