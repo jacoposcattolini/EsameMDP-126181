@@ -256,4 +256,90 @@ public class BattleController {
         view.showResult(result, () -> app.showSessionMenu(state, bossScore, true));
     }
 
+    private void onSongEnd() {
+        if (finished) {
+            return;
+        }
+        if (model.isBossDefeated()) {
+            win(true);
+        } else {
+            lose();
+        }
+    }
+
+    private void lose() {
+        if (finished) {
+            return;
+        }
+        finished = true;
+        timer.stop();
+        stopMusic();
+        model.awardXp(0.5);
+        view.showGameOver(
+                () -> app.retryBattleWithCharacterChoice(state, () -> app.showSessionMenu(state, null, false)),
+                () -> app.showSessionMenu(state, null, false));
+    }
+
+    private void onBossDefeated() {
+        if (finished || defeatChoicePending || model.isKeepPlayingAfterDefeat()) {
+            return;
+        }
+        if (!model.getBoss().hasMusic() || musicPlayer == null) {
+            win(true);
+            return;
+        }
+        showDefeatChoice();
+    }
+
+    private void showDefeatChoice() {
+        defeatChoicePending = true;
+        paused = true;
+        if (musicStarted && musicPlayer != null) {
+            musicPlayer.pause();
+        }
+        view.showDefeat(() -> win(false), this::continueAfterDefeat);
+    }
+
+    private void continueAfterDefeat() {
+        model.setKeepPlayingAfterDefeat(true);
+        defeatChoicePending = false;
+        startResumeCountdown();
+    }
+
+    private void saveAndExit() {
+        TextInputDialog dialog = new TextInputDialog(defaultSaveName());
+        dialog.setTitle("Salva partita");
+        dialog.setHeaderText("Salva ed esci");
+        dialog.setContentText("Nome del salvataggio:");
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(name -> {
+            try {
+                app.getSaveManager().save(name, state);
+            } catch (Exception ex) {
+            }
+            finished = true;
+            timer.stop();
+            stopMusic();
+            app.showMainMenu();
+        });
+    }
+
+    private void saveAndContinue() {
+        TextInputDialog dialog = new TextInputDialog(defaultSaveName());
+        dialog.setTitle("Salva partita");
+        dialog.setHeaderText("Salva");
+        dialog.setContentText("Nome del salvataggio:");
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(name -> {
+            try {
+                app.getSaveManager().save(name, state);
+            } catch (Exception ex) {
+            }
+            startResumeCountdown();
+        });
+    }
+
+    private String defaultSaveName() {
+        return model.getCharacter().getName() + " - VILLAIN " + (state.getCurrentBossIndex() + 1);
+    }
 }
