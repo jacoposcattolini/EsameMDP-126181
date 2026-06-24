@@ -80,4 +80,104 @@ public class BattleController {
         }
     }
 
+    private void prewarmAudio() {
+        if (musicPlayer == null) {
+            return;
+        }
+        try {
+            musicPlayer.setMute(true);
+            musicPlayer.play();
+            musicPlayer.pause();
+            musicPlayer.seek(Duration.ZERO);
+            musicPlayer.setMute(false);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void stopMusic() {
+        if (musicPlayer != null) {
+            musicPlayer.stop();
+            musicPlayer.dispose();
+            musicPlayer = null;
+        }
+    }
+
+    private void startMusicIfNeeded() {
+        if (musicPlayer != null && !musicStarted && model.getGameTime() >= GameContent.LEAD_IN) {
+            musicStarted = true;
+            musicPlayer.play();
+        }
+    }
+
+    private void setupInput() {
+        StackPane root = view.getRoot();
+        root.sceneProperty().addListener((obs, oldScene, scene) -> {
+            if (scene != null) {
+                scene.setOnKeyPressed(e -> handleKey(e.getCode()));
+                view.requestFocus();
+            }
+        });
+        root.setFocusTraversable(true);
+    }
+
+    private void handleKey(KeyCode code) {
+        if (finished || !started || defeatChoicePending || counting) {
+            return;
+        }
+        if (code == KeyCode.ESCAPE) {
+            togglePause();
+            return;
+        }
+        if (paused) {
+            return;
+        }
+        for (int lane = 0; lane < LANE_KEYS.length; lane++) {
+            if (code == LANE_KEYS[lane]) {
+                BattleModel.HitOutcome outcome = model.hitLane(lane);
+                view.showHit(outcome);
+                if (model.isBossDefeated()) {
+                    onBossDefeated();
+                } else if (model.isPlayerDead()) {
+                    lose();
+                }
+                return;
+            }
+        }
+    }
+
+    private void startLoop() {
+        timer = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                if (lastNanos < 0) {
+                    lastNanos = now;
+                }
+                double dt = (now - lastNanos) / 1_000_000_000.0;
+                lastNanos = now;
+                if (counting && !finished) {
+                    countdownRemaining -= dt;
+                    if (countdownRemaining <= 0) {
+                        counting = false;
+                        resume();
+                    }
+                }
+                if (started && !paused && !finished) {
+                    BattleModel.AdvanceResult r = model.advance(dt);
+                    startMusicIfNeeded();
+                    if (r.anyMiss()) {
+                        view.showMiss();
+                    }
+                    if (r.playerDied()) {
+                        lose();
+                    } else if (r.notesExhaustedLoss()) {
+                        lose();
+                    }
+                }
+                view.setCountdown(counting, countdownRemaining);
+                view.render();
+            }
+        };
+        timer.start();
+    }
+
 }
