@@ -180,4 +180,80 @@ public class BattleController {
         timer.start();
     }
 
+    private void startFight() {
+        view.clearOverlay();
+        started = true;
+        lastNanos = -1;
+        view.requestFocus();
+    }
+
+    private void changeStar() {
+        finished = true;
+        timer.stop();
+        stopMusic();
+        app.showChangeCharacter(state, () -> app.startBattle(state));
+    }
+
+    private void togglePause() {
+        if (paused) {
+            startResumeCountdown();
+        } else {
+            pause();
+        }
+    }
+
+    private void pause() {
+        paused = true;
+        if (musicStarted && musicPlayer != null) {
+            musicPlayer.pause();
+        }
+        view.showPause(this::startResumeCountdown, this::saveAndContinue, this::saveAndExit,
+                this::goToSessionMenu, this::quitNoSave);
+    }
+
+    private void startResumeCountdown() {
+        view.clearOverlay();
+        counting = true;
+        countdownRemaining = 3.0;
+        lastNanos = -1;
+        view.requestFocus();
+    }
+
+    private void resume() {
+        paused = false;
+        view.clearOverlay();
+        if (musicStarted && musicPlayer != null) {
+            musicPlayer.play();
+        }
+        lastNanos = -1;
+        view.requestFocus();
+    }
+
+    private void goToSessionMenu() {
+        finished = true;
+        timer.stop();
+        stopMusic();
+        app.showSessionMenu(state, null, false);
+    }
+
+    private void quitNoSave() {
+        finished = true;
+        timer.stop();
+        stopMusic();
+        app.showMainMenu();
+    }
+
+    private void win(boolean songCompleted) {
+        if (finished) {
+            return;
+        }
+        finished = true;
+        timer.stop();
+        stopMusic();
+        model.awardXp(1.0);
+        BattleResult result = model.buildResult(songCompleted);
+        BossScore bossScore = new BossScore(result.score(), result.timeSeconds());
+        view.showResult(result, () -> app.showSessionMenu(state, bossScore, true));
+    }
+
 }
