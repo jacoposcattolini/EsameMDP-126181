@@ -29,3 +29,16 @@ cd <BeatFighter>
 
 ---
 
+## 🤖 Uso di strumenti di AI
+
+Durante la realizzazione del progetto ho utilizzato
+Claude Code mi ha aiutato nel codice:
+-per ridurre il lag e migliorare la precisione del sistema di combattimento
+-nella creazione di animazioni
+-per spiegarmi la teoria delle parti di codice più complicate
+-per correggere più velocemente gli errori
+-per generare codice ripetitivo
+-per darmi consigli su modifiche del codice
+-per aiutarmi e guidarmi nella creazione della wiki
+Stitch e Gemini:
+-per generare alcune immagini di sfondo con Stitch e Gemini
